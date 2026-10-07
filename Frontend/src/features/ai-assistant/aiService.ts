@@ -3,8 +3,9 @@ import { createMessageId, useAIStore, type SelectionChip } from '../../store/aiS
 import { useTestStore } from '../../store/testStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import { detectTestState } from '../workspace/testRunner'
-import { countChanges, diffLines } from './lineDiff'
-import { pickEntry, TESTS_FILE, type AIContext, type AIReply } from './aiScript'
+import { countChanges, diffLines } from '../shared/lineDiff'
+import { FALLBACK_ID, pickEntry, TESTS_FILE, type AIContext, type AIReply } from './aiScript'
+import { askGemini } from './geminiAssistant'
 
 const THINK_MIN_MS = 600
 const THINK_EXTRA_MS = 300
@@ -42,9 +43,17 @@ function describeContext(ctx: AIContext): string {
   return parts.length > 0 ? parts.join(', ') : 'no context'
 }
 
-/** The scripted brain: picks a reply from the user's text and the current workspace state. */
-export function respond(userText: string, context: AIContext): AIReply {
-  return pickEntry(userText, context).reply(context)
+/**
+ * Hybrid brain. A matching scripted rule is used exactly as written; only the generic fallback rule
+ * asks Gemini, and if Gemini is unavailable the fallback script text is used.
+ */
+export async function respond(userText: string, context: AIContext): Promise<AIReply> {
+  const entry = pickEntry(userText, context)
+  if (entry.id === FALLBACK_ID) {
+    const gemini = await askGemini(userText, context)
+    if (gemini) return gemini
+  }
+  return { ...entry.reply(context), source: 'script' }
 }
 
 /** Sends a user message, then streams the scripted reply into the AI store. Logs AI_REQUEST and AI_RESPONSE. */
@@ -74,8 +83,8 @@ export async function sendMessage(rawText: string): Promise<void> {
     lastTestState: context.lastRun?.state ?? null,
   })
 
-  const reply = respond(text, context)
-  await sleep(THINK_MIN_MS + Math.random() * THINK_EXTRA_MS)
+  // The thinking indicator lasts at least the minimum delay, or as long as Gemini takes.
+  const [reply] = await Promise.all([respond(text, context), sleep(THINK_MIN_MS + Math.random() * THINK_EXTRA_MS)])
 
   const id = createMessageId()
   useAIStore.getState().addMessage({ id, role: 'assistant', content: '' })
@@ -93,6 +102,7 @@ export async function sendMessage(rawText: string): Promise<void> {
     code: reply.code,
     targetFile: reply.targetFile,
     suggestionStatus: reply.code ? 'pending' : undefined,
+    source: reply.source,
   })
   useAIStore.getState().setStatus('idle')
 
@@ -100,6 +110,7 @@ export async function sendMessage(rawText: string): Promise<void> {
     messageId: id,
     targetFile: reply.targetFile ?? null,
     hasCodeChange: Boolean(reply.code),
+    source: reply.source,
   })
 }
 

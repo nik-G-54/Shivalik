@@ -1,6 +1,7 @@
 import { Sparkles } from 'lucide-react'
 import MarkdownView from '../shared/MarkdownView'
 import type { AIMessage as AIMessageData } from '../../types'
+import { useAIStore } from '../../store/aiStore'
 import SuggestionCard from './SuggestionCard'
 
 interface AIMessageProps {
@@ -9,6 +10,8 @@ interface AIMessageProps {
 }
 
 export default function AIMessage({ message, streaming = false }: AIMessageProps) {
+  const debug = useAIStore((state) => state.debug)
+
   if (message.role === 'user') {
     const lineCount = message.code?.split('\n').length ?? 0
 
@@ -34,6 +37,11 @@ export default function AIMessage({ message, streaming = false }: AIMessageProps
       <div className="mb-1 flex items-center gap-1 text-[11px] font-medium uppercase tracking-wide text-ai">
         <Sparkles className="h-3 w-3" />
         AI Assistant
+        {debug && message.source && (
+          <span className="ml-1 rounded border border-line px-1 font-mono text-[10px] normal-case tracking-normal text-fg-muted">
+            {message.source}
+          </span>
+        )}
       </div>
       <div className="[&_p:first-child]:mt-0 [&_p:last-child]:mb-0">
         <MarkdownView source={message.content} />

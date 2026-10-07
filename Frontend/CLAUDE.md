@@ -50,7 +50,8 @@ src/
   store/eventStore.ts     activity log (E01, E02, ...) + logEvent()
   store/workspaceStore.ts files, open tabs, active file, edits
   mock/challenge.ts       main challenge, REFERENCE_FIX, WRONG_AI_FIX, markers, locked cards
-  mock/evaluation.ts      report data (scores, Sonar table, comparison, criteria)
+  mock/evaluation.ts      DIMENSIONS (names + weights) and getSonarRows(state, testsWeakened)
+  mock/candidate.ts       demo candidate + company
   mock/repo/              the json-server-style project the candidate edits (real files, loaded with ?raw)
   mock/fixes/             reference and wrong versions of src/utils/query.js
   mock/issue.md           the GitHub-style issue text
@@ -60,7 +61,7 @@ src/
   features/workspace/     IDE screen (TopBar, FileExplorer, EditorPane, TerminalPanel, SidePanel, ...)
   store/aiStore.ts        chat messages, status, attached selection chip
   features/ai-assistant/  scripted assistant: aiScript.ts (rules), aiService.ts (respond, streaming, apply/reject/revert + logging), UI components
-  features/shared/        MarkdownView + markdown parser, PlaceholderPage
+  features/shared/        MarkdownView, markdown parser, lineDiff, monacoSetup, changes (real diff vs originals), submission info, AppHeader, badges
 ```
 
 ## Workspace notes
@@ -101,3 +102,22 @@ npm run lint
 6. fallback: clarifying question
 
 State comes from `detectTestState()` (marker check on the target file) and `testStore.lastRun`. Events: `AI_REQUEST` and `AI_RESPONSE` in `sendMessage`; apply, reject and revert are `applySuggestion`, `rejectSuggestion` and `revertSuggestion`. A suggestion's status is `pending` / `accepted` (shown as "Applied") / `rejected` / `reverted`.
+
+## Evaluation and report
+
+- `features/report/evaluator.ts`: `evaluate()` tries `evaluateWithLLM()` (Gemini, `evaluatorLLM.ts`) and falls back to `evaluateWithRules()`, which reads the **live** event, AI, test and workspace stores and always works offline (`source: 'rules'`). The report only reads the `Evaluation` shape.
+- Visible correctness is the real last test run. Hidden and regression come from the final state of `query.js`: fixed 6/6 and 3/3, wrong 4/6 and 1/3, buggy 3/6 and 0/3.
+- Criteria `evidenceIds` are real event ids found by walking the log (first accepted AI suggestion, the `TEST_FAILED` after it, rejections, reverts, last `TEST_PASSED`). Reasons are templated from which events exist.
+- Weights come from `DIMENSIONS`: Correctness 35, Code Quality 25, Engineering Process 20, AI Judgment 10, Reference Alignment 10.
+- Accepting the AI's test-weakening suggestion makes the terminal suite pass (see `isTestsWeakened()` in `testRunner.ts`) but the report shows hidden/regression failures and drops AI and Engineering Judgment sharply.
+- `resetDemo()` clears every store. The dashboard's Start button and the report's Restart button both call it.
+- Evidence chips call `evidenceStore.focusEvidence(id)`: the timeline scrolls to the event and highlights it for 2s.
+
+## Gemini (hybrid mode)
+
+- Config: `VITE_GEMINI_API_KEY` and `VITE_GEMINI_MODEL` in `Frontend/.env` (git-ignored; see `.env.example`). VITE_ vars ship in the browser bundle, so this is demo-only. Restart the dev server after changing `.env`.
+- `src/lib/gemini.ts` `generateJson()` returns `null` (with a `console.warn`) on a missing key, network error, timeout (25s), non-200 or bad JSON. `geminiDebug.lastRaw` / `lastError` hold the last raw response or failure.
+- Assistant: scripted rules always win. Only the generic fallback rule asks Gemini (`geminiAssistant.ts`), and if it returns null the fallback script text is used. `message.source` is `'script' | 'gemini'`; Ctrl+Shift+D (with the AI tab open) shows a badge.
+- Evaluator: deterministic facts (correctness numbers, SonarQube rows, change analysis, weights, Correctness and Code Quality scores) always come from the rules. Gemini supplies the six criteria, reference comparison, AI usage, summary and the Engineering Process / AI Judgment / Reference Alignment scores. `mergeLLMResult()` clamps scores, drops unknown evidence ids (`llmDebug.droppedEvidenceIds`), and takes any criterion with no valid ids from the rules (`llmDebug.criteriaTakenFromRules`). Overall is recomputed from the weights.
+- Rules calibration: accepting a flawed AI fix and then recovering lands around 85-88 (Hire); the bad path (accepting the weakened test) lands around 50-55. Verdict thresholds: 90 Strong Hire, 75 Hire, 60 Lean Hire.
+- Dev-tip: after editing a store file Vite serves it under `?t=` and a dynamic `import('/src/store/x.ts')` in the console becomes a separate instance. Restart the dev server before console-driven tests.

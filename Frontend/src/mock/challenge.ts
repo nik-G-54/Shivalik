@@ -33,6 +33,7 @@ export const challenge: Challenge = {
   category: 'Bug fix',
   status: 'Not started',
   issueTitle: '_ne filter is ignored: ?author_ne=typicode returns all posts',
+  tags: ['Bug fix', 'Node.js', 'Tests'],
   issueMarkdown,
   files,
   targetFile: TARGET_FILE,
@@ -60,6 +61,7 @@ const lockedChallenges: ChallengeSummary[] = [
     category: 'Bug fix',
     status: 'Locked',
     issueTitle: 'Recently read entries are evicted before stale ones',
+    tags: ['Bug fix', 'Node.js', 'Data structures'],
   },
   {
     id: 'express-cookie-expiry',
@@ -70,6 +72,7 @@ const lockedChallenges: ChallengeSummary[] = [
     category: 'Bug fix',
     status: 'Locked',
     issueTitle: 'Session cookie expiry is not extended on rolling sessions',
+    tags: ['Bug fix', 'Node.js', 'HTTP'],
   },
 ]
 

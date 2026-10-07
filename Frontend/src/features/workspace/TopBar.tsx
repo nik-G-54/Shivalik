@@ -1,19 +1,13 @@
 import { GitBranch, Loader2, Play, Send, SquareTerminal } from 'lucide-react'
-import clsx from 'clsx'
 import { useTerminalStore } from '../../store/terminalStore'
-import type { Challenge, Difficulty } from '../../types'
+import type { Challenge } from '../../types'
+import DifficultyBadge from '../shared/DifficultyBadge'
 import { executeCommand } from './commands'
 import Countdown from './Countdown'
 
 interface TopBarProps {
   challenge: Challenge
   onSubmit: () => void
-}
-
-const DIFFICULTY_CLASS: Record<Difficulty, string> = {
-  Easy: 'border-pass/50 bg-pass/10 text-pass',
-  Medium: 'border-warn/50 bg-warn/10 text-warn',
-  Hard: 'border-fail/50 bg-fail/10 text-fail',
 }
 
 export default function TopBar({ challenge, onSubmit }: TopBarProps) {
@@ -32,14 +26,7 @@ export default function TopBar({ challenge, onSubmit }: TopBarProps) {
           <GitBranch className="h-3.5 w-3.5" />
           {challenge.repo}
         </span>
-        <span
-          className={clsx(
-            'shrink-0 rounded-full border px-2 py-0.5 text-xs font-medium',
-            DIFFICULTY_CLASS[challenge.difficulty],
-          )}
-        >
-          {challenge.difficulty}
-        </span>
+        <DifficultyBadge difficulty={challenge.difficulty} />
       </div>
 
       <Countdown limitMin={challenge.timeLimitMin} />

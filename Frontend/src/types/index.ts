@@ -17,6 +17,7 @@ export interface ChallengeSummary {
   category: string
   status: ChallengeStatus
   issueTitle: string
+  tags: string[]
 }
 
 export interface Challenge extends ChallengeSummary {
@@ -59,6 +60,8 @@ export interface CriterionScore {
   evidenceIds: string[]
 }
 
+export type AIMessageSource = 'script' | 'gemini'
+
 export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'reverted'
 
 export interface AIMessage {
@@ -70,6 +73,8 @@ export interface AIMessage {
   suggestionStatus?: SuggestionStatus
   /** File content before an accepted suggestion was applied, so it can be reverted. */
   previousContent?: string
+  /** Where an assistant reply came from. */
+  source?: AIMessageSource
 }
 
 // ---- Evaluation report ----
@@ -98,8 +103,42 @@ export interface SonarRow {
 
 export type ComparisonVerdict = 'Match' | 'Different' | 'Better' | 'Worse'
 
-export interface ComparisonRow {
-  aspect: 'Root cause' | 'Behavior' | 'Implementation' | 'Complexity'
-  verdict: ComparisonVerdict
-  note: string
+export type Verdict = 'Strong Hire' | 'Hire' | 'Lean Hire' | 'No Hire'
+
+export interface DimensionScore {
+  name: string
+  /** Percent weight; all dimensions sum to 100 */
+  weight: number
+  /** 0-100 */
+  score: number
+}
+
+export interface ReferenceComparison {
+  rootCause: ComparisonVerdict
+  behavior: ComparisonVerdict
+  implementation: ComparisonVerdict
+  complexity: ComparisonVerdict
+  coverage: ComparisonVerdict
+}
+
+export type AIUsagePattern = 'augmentation' | 'dependence' | 'independent'
+
+export interface AIUsage {
+  pattern: AIUsagePattern
+  summary: string
+  evidenceIds: string[]
+}
+
+/** The full evaluation. A rules engine or an LLM can produce it; the report only reads this shape. */
+export interface Evaluation {
+  /** 0-100 */
+  overallScore: number
+  verdict: Verdict
+  summary: string
+  dimensions: DimensionScore[]
+  correctness: CorrectnessResults
+  criteria: CriterionScore[]
+  referenceComparison: ReferenceComparison
+  aiUsage: AIUsage
+  source: 'rules' | 'llm'
 }

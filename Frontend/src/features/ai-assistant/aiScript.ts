@@ -2,6 +2,7 @@ import { challenge, WRONG_AI_FIX } from '../../mock/challenge'
 import type { SelectionChip } from '../../store/aiStore'
 import type { TestRun, TestState } from '../../store/testStore'
 import { originalContent } from '../../store/workspaceStore'
+import type { AIMessageSource } from '../../types'
 
 export const TESTS_FILE = 'tests/query.test.js'
 
@@ -22,6 +23,7 @@ export interface AIReply {
   targetFile?: string
   /** Logged as the AI_RESPONSE summary. */
   summary: string
+  source?: AIMessageSource
 }
 
 interface ScriptEntry {
@@ -149,8 +151,10 @@ const SCRIPT: ScriptEntry[] = [
   },
 ]
 
+export const FALLBACK_ID = 'fallback'
+
 const FALLBACK: ScriptEntry = {
-  id: 'fallback',
+  id: FALLBACK_ID,
   matches: () => true,
   reply: (ctx) => ({
     summary: 'AI answered a general question',

@@ -15,6 +15,9 @@ interface AIState {
   chip: SelectionChip | null
   /** Bumped to ask the chat input to take focus. */
   focusTick: number
+  /** Debug toggle (Ctrl+Shift+D): show which engine produced each reply. */
+  debug: boolean
+  toggleDebug: () => void
   addMessage: (message: AIMessage) => void
   updateMessage: (id: string, patch: Partial<AIMessage>) => void
   setStatus: (status: AIStatus) => void
@@ -31,6 +34,9 @@ export const useAIStore = create<AIState>((set) => ({
   status: 'idle',
   chip: null,
   focusTick: 0,
+  debug: false,
+
+  toggleDebug: () => set((state) => ({ debug: !state.debug })),
 
   addMessage: (message) => set((state) => ({ messages: [...state.messages, message] })),
 

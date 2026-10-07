@@ -11,7 +11,20 @@ import ThinkingDots from './ThinkingDots'
 export default function AIAssistantPanel() {
   const messages = useAIStore((state) => state.messages)
   const status = useAIStore((state) => state.status)
+  const toggleDebug = useAIStore((state) => state.toggleDebug)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Ctrl+Shift+D toggles a small badge showing whether each reply came from the script or Gemini.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === 'd') {
+        event.preventDefault()
+        toggleDebug()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [toggleDebug])
 
   useEffect(() => {
     const el = scrollRef.current

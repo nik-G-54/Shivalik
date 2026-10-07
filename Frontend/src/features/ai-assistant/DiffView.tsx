@@ -1,5 +1,5 @@
 import clsx from 'clsx'
-import type { DiffLine } from './lineDiff'
+import type { DiffLine } from '../shared/lineDiff'
 
 interface DiffViewProps {
   lines: DiffLine[]

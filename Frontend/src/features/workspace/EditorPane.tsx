@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Editor, { type OnMount } from '@monaco-editor/react'
-import './monacoSetup'
+import '../shared/monacoSetup'
 import { logEvent } from '../../store/eventStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 import AskAIButton from './AskAIButton'

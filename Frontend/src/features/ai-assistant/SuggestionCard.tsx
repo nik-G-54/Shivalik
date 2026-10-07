@@ -5,7 +5,7 @@ import { useWorkspaceStore } from '../../store/workspaceStore'
 import type { AIMessage, SuggestionStatus } from '../../types'
 import { applySuggestion, rejectSuggestion, revertSuggestion } from './aiService'
 import DiffView from './DiffView'
-import { collapseDiff, countChanges, diffLines } from './lineDiff'
+import { collapseDiff, countChanges, diffLines } from '../shared/lineDiff'
 
 interface SuggestionCardProps {
   message: AIMessage

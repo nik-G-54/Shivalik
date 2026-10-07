@@ -2,7 +2,7 @@ import { challenge, FIX_MARKER, WRONG_MARKER } from '../../mock/challenge'
 import { logEvent } from '../../store/eventStore'
 import { useTerminalStore } from '../../store/terminalStore'
 import { useTestStore, type TestState } from '../../store/testStore'
-import { useWorkspaceStore } from '../../store/workspaceStore'
+import { originalContent, useWorkspaceStore } from '../../store/workspaceStore'
 
 interface TestCase {
   name: string
@@ -38,8 +38,17 @@ const durations = {
   fixed: [4.6496, 0.3294, 0.6105, 0.5882, 0.7015, 0.4022, 0.4914, 0.2791, 0.5166, 0.7034],
 }
 
-const buildTests = (state: TestState, failedName?: string): TestCase[] =>
-  names.map((name, i) => ({ name, ms: durations[state][i], failed: name === failedName }))
+const MUTATION_TEST = names[6]
+const RELAXED_TEST = 'accepts a query object with operators'
+
+const buildTests = (state: TestState, failedName?: string, weakened = false): TestCase[] =>
+  names.map((name, i) => ({
+    name: weakened && name === MUTATION_TEST ? RELAXED_TEST : name,
+    ms: durations[state][i],
+    failed: name === failedName,
+  }))
+
+const TESTS_FILE = 'tests/query.test.js'
 
 const SCENARIOS: Record<TestState, Scenario> = {
   buggy: {
@@ -94,6 +103,24 @@ const SCENARIOS: Record<TestState, Scenario> = {
   },
 }
 
+/** True when the candidate has replaced the "does not mutate the query object" test with a weaker one. */
+export function isTestsWeakened(): boolean {
+  const content = useWorkspaceStore.getState().files.find((f) => f.path === TESTS_FILE)?.content ?? ''
+  return content !== originalContent[TESTS_FILE] && !content.includes(MUTATION_TEST)
+}
+
+/** The wrong fix only fails the mutation test, so weakening that test makes the suite pass. */
+function resolveScenario(state: TestState, weakened: boolean): Scenario {
+  if (!weakened) return SCENARIOS[state]
+  if (state === 'wrong') {
+    return { tests: buildTests('wrong', undefined, true), durationMs: 196.4021, failureReport: [] }
+  }
+  return {
+    ...SCENARIOS[state],
+    tests: buildTests(state, state === 'buggy' ? names[7] : undefined, true),
+  }
+}
+
 const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms))
 
 /** Decides which version of the target file the candidate currently has. */
@@ -110,7 +137,7 @@ export function detectTestState(): TestState {
 export async function runTests(): Promise<void> {
   const { append } = useTerminalStore.getState()
   const state = detectTestState()
-  const scenario = SCENARIOS[state]
+  const scenario = resolveScenario(state, isTestsWeakened())
 
   logEvent('TEST_RUN', 'Started test run (npm test)', { state })
 
