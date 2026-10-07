@@ -1,4 +1,5 @@
 import { Sparkles } from 'lucide-react'
+import { useAIStore } from '../../store/aiStore'
 import { useWorkspaceStore } from '../../store/workspaceStore'
 
 /** Floating shortcut shown over the editor while code is selected. */
@@ -6,10 +7,18 @@ export default function AskAIButton() {
   const setSidePanelTab = useWorkspaceStore((state) => state.setSidePanelTab)
   const lineCount = useWorkspaceStore((state) => state.selectedCode.split('\n').length)
 
+  const handleClick = () => {
+    const { selectedFile, selectedCode } = useWorkspaceStore.getState()
+    if (selectedFile && selectedCode) {
+      useAIStore.getState().attachSelection({ file: selectedFile, code: selectedCode })
+    }
+    setSidePanelTab('ai')
+  }
+
   return (
     <button
       type="button"
-      onClick={() => setSidePanelTab('ai')}
+      onClick={handleClick}
       className="absolute right-6 top-3 z-10 flex items-center gap-1.5 rounded-md border border-ai/50 bg-panel px-2.5 py-1 text-xs text-ai shadow-lg hover:bg-ai/15"
     >
       <Sparkles className="h-3.5 w-3.5" />

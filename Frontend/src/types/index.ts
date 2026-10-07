@@ -38,6 +38,7 @@ export type EventType =
   | 'AI_RESPONSE'
   | 'AI_SUGGESTION_ACCEPTED'
   | 'AI_SUGGESTION_REJECTED'
+  | 'AI_CHANGE_REVERTED'
   | 'SUBMISSION_CREATED'
 
 export interface ActivityEvent {
@@ -58,7 +59,7 @@ export interface CriterionScore {
   evidenceIds: string[]
 }
 
-export type SuggestionStatus = 'pending' | 'accepted' | 'rejected'
+export type SuggestionStatus = 'pending' | 'accepted' | 'rejected' | 'reverted'
 
 export interface AIMessage {
   id: string
@@ -67,6 +68,8 @@ export interface AIMessage {
   code?: string
   targetFile?: string
   suggestionStatus?: SuggestionStatus
+  /** File content before an accepted suggestion was applied, so it can be reverted. */
+  previousContent?: string
 }
 
 // ---- Evaluation report ----

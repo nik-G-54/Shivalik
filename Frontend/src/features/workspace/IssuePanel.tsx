@@ -1,6 +1,6 @@
 import { CircleDot, Target } from 'lucide-react'
 import { challenge } from '../../mock/challenge'
-import MarkdownView from './MarkdownView'
+import MarkdownView from '../shared/MarkdownView'
 
 const LABELS = [
   { name: 'bug', className: 'border-fail/50 bg-fail/15 text-fail' },

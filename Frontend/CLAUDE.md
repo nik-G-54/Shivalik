@@ -58,7 +58,9 @@ src/
   store/terminalStore.ts  terminal lines, command history, running flag
   features/<feature>/     one component per file
   features/workspace/     IDE screen (TopBar, FileExplorer, EditorPane, TerminalPanel, SidePanel, ...)
-  features/ai-assistant/  AIAssistantPanel (placeholder, built next)
+  store/aiStore.ts        chat messages, status, attached selection chip
+  features/ai-assistant/  scripted assistant: aiScript.ts (rules), aiService.ts (respond, streaming, apply/reject/revert + logging), UI components
+  features/shared/        MarkdownView + markdown parser, PlaceholderPage
 ```
 
 ## Workspace notes
@@ -66,7 +68,8 @@ src/
 - Terminal commands go through `executeCommand()` in `features/workspace/commands.ts`. It logs `COMMAND_EXECUTED`, and the **Run Tests** button calls it too, so both paths behave identically.
 - `testRunner.ts` picks the result from the current content of `challenge.targetFile` (`WRONG_MARKER` → wrong, else `FIX_MARKER` → fixed, else buggy). Names, durations and assertion output are copied from real `node --test` runs of the mock repo, so if you change `src/mock/repo` tests or the fixes, re-measure them.
 - Monaco is bundled locally (`monacoSetup.ts`, `monaco-editor` 0.57 uses `monaco-editor/editor/...` paths, not `esm/vs/...`) so the demo works offline.
-- Selecting code in the editor writes `selectedFile` / `selectedCode` to `workspaceStore`; the AI panel should read them. `applyEdit()` (accepted AI suggestion) does not log; the caller must log `AI_SUGGESTION_ACCEPTED` and `FILE_MODIFIED`.
+- Selecting code in the editor writes `selectedFile` / `selectedCode` to `workspaceStore`. "Ask AI" copies it into `aiStore.chip` as removable context for the next message.
+- `applyEdit()` does not log and does not trigger the editor's `FILE_MODIFIED` debounce, so AI changes are logged only by `features/ai-assistant/aiService.ts` (`AI_SUGGESTION_ACCEPTED`, `AI_CHANGE_REVERTED`).
 - `react-resizable-panels` v4: numbers are pixels, strings are percentages (`defaultSize="18%"`). Style separators with `data-[separator=hover]` / `data-[separator=active]`.
 
 ## The mock challenge
@@ -85,3 +88,16 @@ npm run dev     # Vite dev server
 npm run build   # tsc -b && vite build (type-check)
 npm run lint
 ```
+
+## AI assistant (scripted)
+
+`respond(userText, context)` in `aiService.ts` picks the first matching rule in `aiScript.ts`. Order matters:
+
+1. hint (clone / copy / spread / immutable / without mutating): explanation only, no code
+2. weaken-test (last run state `wrong`, file not fixed, failure-ish wording, no `_ne` mention): suggests relaxing `tests/query.test.js`. This is deliberately bad; a strong candidate rejects it
+3. ne-wrong-fix (`_ne` wording and file still buggy): suggests `WRONG_AI_FIX`
+4. ne-other-state (`_ne` wording, file already wrong or fixed): hint or confirmation
+5. where-filtering: explains `src/utils/query.js`
+6. fallback: clarifying question
+
+State comes from `detectTestState()` (marker check on the target file) and `testStore.lastRun`. Events: `AI_REQUEST` and `AI_RESPONSE` in `sendMessage`; apply, reject and revert are `applySuggestion`, `rejectSuggestion` and `revertSuggestion`. A suggestion's status is `pending` / `accepted` (shown as "Applied") / `rejected` / `reverted`.
