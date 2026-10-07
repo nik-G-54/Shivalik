@@ -1,1 +1,47 @@
 @import "tailwindcss";
+
+/* Tailwind v4: tokens declared in @theme become utilities (bg-editor, text-fg, border-line, ...) */
+@theme {
+  --color-editor: #1e1e1e;
+  --color-panel: #252526;
+  --color-sidebar: #181818;
+  --color-line: #3c3c3c;
+  --color-fg: #cccccc;
+  --color-fg-muted: #8b8b8b;
+
+  /* Semantic colors */
+  --color-pass: #73c991;
+  --color-fail: #f14c4c;
+  --color-warn: #cca700;
+  --color-ai: #b180d7;
+
+  --font-sans: "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", "Fira Code", Consolas, "Courier New", monospace;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-editor);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  code,
+  pre,
+  kbd,
+  samp {
+    font-family: var(--font-mono);
+  }
+}

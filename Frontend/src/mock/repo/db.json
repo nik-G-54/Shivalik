@@ -1,0 +1,16 @@
+{
+  "posts": [
+    { "id": 1, "title": "Hello json-server", "author": "typicode", "views": 100 },
+    { "id": 2, "title": "Building a fake REST API", "author": "alice", "views": 250 },
+    { "id": 3, "title": "Server-side filtering explained", "author": "typicode", "views": 40 },
+    { "id": 4, "title": "Why mock servers matter", "author": "bob", "views": 100 },
+    { "id": 5, "title": "Pagination patterns", "author": "alice", "views": 320 },
+    { "id": 6, "title": "Release notes v0.4", "author": "carol", "views": 15 }
+  ],
+  "comments": [
+    { "id": 1, "postId": 1, "author": "alice", "body": "Nice intro!" },
+    { "id": 2, "postId": 1, "author": "bob", "body": "Works great." },
+    { "id": 3, "postId": 2, "author": "typicode", "body": "Thanks for the writeup." }
+  ],
+  "profile": { "name": "typicode" }
+}

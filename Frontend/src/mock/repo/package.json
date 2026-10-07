@@ -1,0 +1,13 @@
+{
+  "name": "mini-json-server",
+  "version": "0.4.2",
+  "description": "A tiny REST API over a JSON file",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test"
+  },
+  "keywords": ["json", "rest", "api", "mock", "server"],
+  "license": "MIT"
+}
